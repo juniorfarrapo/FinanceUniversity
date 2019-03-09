@@ -4,7 +4,6 @@ Projeto teste para cargo estagiário.
 CRUD implementado e demais tarefas nos detalhes das Views.
 Use o menu superior para navegar entre as instâncias, adicionar, remover, editar e ver detalhes específicos e gerais de instâncias em comum.
 
-# FinanceUniversity
 ### EN
 Test project for trainee position.
 CRUD implemented and other tasks in the details of Views.
