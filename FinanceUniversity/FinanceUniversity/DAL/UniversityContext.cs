@@ -8,6 +8,7 @@ namespace FinanceUniversity.DAL
     {
         public UniversityContext() : base("UniversityContext")
         {
+            this.Configuration.LazyLoadingEnabled = false;
         }
 
         public DbSet<Student> Students { get; set; }

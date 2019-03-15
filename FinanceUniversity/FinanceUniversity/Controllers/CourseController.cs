@@ -1,136 +1,68 @@
-﻿using System;
+﻿using FinanceUniversity.DAL;
+using FinanceUniversity.Models;
+using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.Entity;
 using System.Linq;
-using System.Net;
 using System.Web;
 using System.Web.Mvc;
-using FinanceUniversity.DAL;
-using FinanceUniversity.Models;
 
 namespace FinanceUniversity.Controllers
 {
     public class CourseController : Controller
     {
-        private UniversityContext db = new UniversityContext();
 
-        // GET: Course
+        // GET: Home
         public ActionResult Index()
-        {
-            return View(db.Courses.ToList());
-        }
-
-        // GET: Course/Details/5
-        public ActionResult Details(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Course course = db.Courses.Find(id);
-            if (course == null)
-            {
-                return HttpNotFound();
-            }
-            return View(course);
-        }
-
-        // GET: Course/Create
-        public ActionResult Create()
         {
             return View();
         }
 
-        // POST: Course/Create
-        // Para se proteger de mais ataques, ative as propriedades específicas a que você quer se conectar. Para 
-        // obter mais detalhes, consulte https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "CourseID,Title")] Course course)
+        public JsonResult GetCourses()
         {
-            try
-            {
-                if (ModelState.IsValid)
-                {
-                    db.Courses.Add(course);
-                    db.SaveChanges();
-                    return RedirectToAction("Index");
-                }
-            }
-            catch (DataException /* dex */)
-            {
-                //Log the error (uncomment dex variable name and add a line here to write a log.
-                ModelState.AddModelError("", "Unable to save changes. Course code already in use, use another number.");
-            }
-
-            return View(course);
+            UniversityContext db = new UniversityContext();
+            return Json(db.Courses.ToList());
         }
 
-        // GET: Course/Edit/5
-        public ActionResult Edit(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Course course = db.Courses.Find(id);
-            if (course == null)
-            {
-                return HttpNotFound();
-            }
-            return View(course);
-        }
-
-        // POST: Course/Edit/5
-        // Para se proteger de mais ataques, ative as propriedades específicas a que você quer se conectar. Para 
-        // obter mais detalhes, consulte https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "CourseID,Title")] Course course)
+        public JsonResult InsertCourse(Course course)
         {
-            if (ModelState.IsValid)
+            using (UniversityContext db = new UniversityContext())
             {
-                db.Entry(course).State = EntityState.Modified;
+                db.Courses.Add(course);
                 db.SaveChanges();
-                return RedirectToAction("Index");
             }
-            return View(course);
+
+            return Json(course);
         }
 
-        // GET: Course/Delete/5
-        public ActionResult Delete(int? id)
+        [HttpPost]
+        public ActionResult UpdateCourse(Course course)
         {
-            if (id == null)
+            using (UniversityContext db = new UniversityContext())
             {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+                Course updatedCourse = (from c in db.Courses
+                                            where c.CourseID == course.CourseID
+                                            select c).FirstOrDefault();
+                updatedCourse.Title = course.Title;
+                db.SaveChanges();
             }
-            Course course = db.Courses.Find(id);
-            if (course == null)
-            {
-                return HttpNotFound();
-            }
-            return View(course);
+
+            return new EmptyResult();
         }
 
-        // POST: Course/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
+        [HttpPost]
+        public ActionResult DeleteCourse(int courseId)
         {
-            Course course = db.Courses.Find(id);
-            db.Courses.Remove(course);
-            db.SaveChanges();
-            return RedirectToAction("Index");
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
+            using (UniversityContext db = new UniversityContext())
             {
-                db.Dispose();
+                Course course = (from c in db.Courses
+                                     where c.CourseID == courseId
+                                     select c).FirstOrDefault();
+                db.Courses.Remove(course);
+                db.SaveChanges();
             }
-            base.Dispose(disposing);
+            return new EmptyResult();
         }
     }
 }

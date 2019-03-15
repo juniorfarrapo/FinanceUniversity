@@ -13,134 +13,64 @@ namespace FinanceUniversity.Controllers
 {
     public class SubjectController : Controller
     {
-        private UniversityContext db = new UniversityContext();
-
-        // GET: Subject
+        // GET: Home
         public ActionResult Index()
         {
-            var subjects = db.Subjects.Include(s => s.Course).Include(s => s.Teacher);
-            return View(subjects.ToList());
-        }
-
-        // GET: Subject/Details/5
-        public ActionResult Details(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Subject subject = db.Subjects.Find(id);
-            if (subject == null)
-            {
-                return HttpNotFound();
-            }
-            return View(subject);
-        }
-
-        // GET: Subject/Create
-        public ActionResult Create()
-        {
-            ViewBag.CourseID = new SelectList(db.Courses, "CourseID", "Title");
-            ViewBag.TeacherID = new SelectList(db.Teachers, "TeacherID", "Name");
             return View();
         }
 
-        // POST: Subject/Create
-        // Para se proteger de mais ataques, ative as propriedades específicas a que você quer se conectar. Para 
-        // obter mais detalhes, consulte https://go.microsoft.com/fwlink/?LinkId=317598.
+
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "SubjectID,Title,CourseID,TeacherID")] Subject subject)
+        public JsonResult GetSubjects()
         {
-            try
-            {
-                if (ModelState.IsValid)
-                {
-                    db.Subjects.Add(subject);
-                    db.SaveChanges();
-                    return RedirectToAction("Index");
-                }
-
-            }
-            catch (DataException /* dex */)
-            {
-                //Log the error (uncomment dex variable name and add a line here to write a log.
-                ModelState.AddModelError("", "Unable to save changes. Subject code already in use, use another number.");
-            }
-
-            ViewBag.CourseID = new SelectList(db.Courses, "CourseID", "Title", subject.CourseID);
-            ViewBag.TeacherID = new SelectList(db.Teachers, "TeacherID", "Name", subject.TeacherID);
-            return View(subject);
+            UniversityContext db = new UniversityContext();
+            return Json(db.Subjects.ToList());
         }
 
-        // GET: Subject/Edit/5
-        public ActionResult Edit(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Subject subject = db.Subjects.Find(id);
-            if (subject == null)
-            {
-                return HttpNotFound();
-            }
-            ViewBag.CourseID = new SelectList(db.Courses, "CourseID", "Title", subject.CourseID);
-            ViewBag.TeacherID = new SelectList(db.Teachers, "TeacherID", "Name", subject.TeacherID);
-            return View(subject);
-        }
 
-        // POST: Subject/Edit/5
-        // Para se proteger de mais ataques, ative as propriedades específicas a que você quer se conectar. Para 
-        // obter mais detalhes, consulte https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "SubjectID,Title,CourseID,TeacherID")] Subject subject)
+        public JsonResult InsertSubject(Subject subject)
         {
-            if (ModelState.IsValid)
+            using (UniversityContext db = new UniversityContext())
             {
-                db.Entry(subject).State = EntityState.Modified;
+                db.Subjects.Add(subject);
                 db.SaveChanges();
-                return RedirectToAction("Index");
             }
-            ViewBag.CourseID = new SelectList(db.Courses, "CourseID", "Title", subject.CourseID);
-            ViewBag.TeacherID = new SelectList(db.Teachers, "TeacherID", "Name", subject.TeacherID);
-            return View(subject);
+
+            return Json(subject);
         }
 
-        // GET: Subject/Delete/5
-        public ActionResult Delete(int? id)
+        [HttpPost]
+        public ActionResult UpdateSubject(Subject subject)
         {
-            if (id == null)
+            using (UniversityContext db = new UniversityContext())
             {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+                Subject updatedSubject = (from c in db.Subjects
+                                        where c.SubjectID == subject.SubjectID
+                                        select c).FirstOrDefault();
+                updatedSubject.Title = subject.Title;
+                updatedSubject.TeacherID = subject.TeacherID;
+                updatedSubject.CourseID = subject.CourseID;
+                db.SaveChanges();
             }
-            Subject subject = db.Subjects.Find(id);
-            if (subject == null)
-            {
-                return HttpNotFound();
-            }
-            return View(subject);
+
+            return new EmptyResult();
         }
 
-        // POST: Subject/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
+        [HttpPost]
+        public ActionResult DeleteSubject(int subjectId)
         {
-            Subject subject = db.Subjects.Find(id);
-            db.Subjects.Remove(subject);
-            db.SaveChanges();
-            return RedirectToAction("Index");
+            using (UniversityContext db = new UniversityContext())
+            {
+                Subject subject = (from c in db.Subjects
+                                 where c.SubjectID == subjectId
+                                 select c).FirstOrDefault();
+                db.Subjects.Remove(subject);
+                db.SaveChanges();
+            }
+            return new EmptyResult();
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+       
     }
 }
