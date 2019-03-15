@@ -1,0 +1,206 @@
+﻿@{
+    ViewBag.Title = "Subject Index";
+}
+
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+    <style type="text/css">
+        body {
+            font-family: Arial;
+            font-size: 10pt;
+        }
+
+        .table {
+            border: 1px solid #ccc;
+            border-collapse: collapse;
+        }
+
+            .table th {
+                background-color: #F7F7F7;
+                color: #333;
+                font-weight: bold;
+            }
+
+            .table th, .table td {
+                padding: 5px;
+                border: 1px solid #ccc;
+            }
+    </style>
+</head>
+<body>
+    <div ng-app="MyApp" ng-controller="MyController">
+        <table id="tblSubjects" class="table" cellpadding="0" cellspacing="0">
+            <tr>
+                <th style="width:100px">Subject ID</th>
+                <th style="width:150px">Title</th>
+                <th style="width:150px">CourseID</th>
+                <th style="width:150px">TeacherID</th>
+                <th style="width:100px"></th>
+            </tr>
+            <tbody ng-repeat="m in Subjects">
+                <tr>
+                    <td><span>{{m.SubjectID}}</span></td>
+                    <td>
+                        <span ng-hide="m.EditMode">{{m.Title}}</span>
+                        <input type="text" ng-model="m.Title" ng-show="m.EditMode" />
+                    </td>
+                    <td>
+                        <span ng-hide="m.EditMode">{{m.CourseID}}</span>
+                        <input type="text" ng-model="m.CourseID" ng-show="m.EditMode" />
+                    </td>
+                    <td>
+                        <span ng-hide="m.EditMode">{{m.TeacherID}}</span>
+                        <input type="text" ng-model="m.TeacherID" ng-show="m.EditMode" />
+                    </td>
+                    <td>
+                        <a class="Edit" href="javascript:;" ng-hide="m.EditMode" ng-click="Edit($index)">Edit</a>
+                        <a class="Update" href="javascript:;" ng-show="m.EditMode" ng-click="Update($index)">Update</a>
+                        <a class="Cancel" href="javascript:;" ng-show="m.EditMode" ng-click="Cancel($index)">Cancel</a>
+                        <a href="javascript:;" ng-hide="m.EditMode" ng-click="Delete(m.SubjectID)">Delete</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        
+
+        <table border="0" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="width: 150px">
+                    Subject ID:<br />
+                    <input type="text" ng-model="SubjectID" style="width:140px" />
+                </td>
+                <td style="width: 150px">
+                    Title:<br />
+                    <input type="text" ng-model="Title" style="width:140px" />
+                </td>
+                <td style="width: 150px">
+                    CourseID:<br />
+                    <select ng-model="CourseID">
+                        <option ng-repeat="n in Courses" value={{n.CourseID}}>{{n.Title}}</option>
+                    </select>
+                </td>
+                <td style="width: 150px">
+                    TeacherID:<br />
+                    <input type="text" ng-model="TeacherID" style="width:140px" />
+                </td>
+                <td style="width: 200px">
+                    <br />
+                    <input type="button" value="Add" ng-click="Add()" />
+                </td>
+            </tr>
+        </table>
+    </div>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.9/angular.min.js"></script>
+    <script type="text/javascript" src="http://ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js"></script>
+    <script type="text/javascript">
+        var app = angular.module('MyApp', [])
+        app.controller('MyController', function ($scope, $http, $window) {
+            //Getting records from database.
+            var post = $http({
+                method: "POST",
+                url: "/Subject/GetSubjects",
+                dataType: 'json',
+                headers: { "Content-Type": "application/json" }
+            });
+            post.success(function (data, status) {
+                //The received response is saved in Customers array.
+                $scope.Subjects = data;
+            });
+            /////
+            //Getting records from database.
+            var post = $http({
+                method: "POST",
+                url: "/Course/GetCourses",
+                dataType: 'json',
+                headers: { "Content-Type": "application/json" }
+            });
+            post.success(function (data, status) {
+                //The received response is saved in Customers array.
+                $scope.Courses = data;
+            });
+            /////
+
+            //Adding new record to database.
+            $scope.Add = function () {
+                if (typeof ($scope.SubjectID) == "undefined" || typeof ($scope.Title) == "undefined") {
+                    return;
+                }
+                var post = $http({
+                    method: "POST",
+                    url: "/Subject/InsertSubject",
+                    data: "{SubjectID: '" + $scope.SubjectID + "', Title: '" + $scope.Title + "', CourseID: '" + $scope.CourseID + "', TeacherID: '" + $scope.TeacherID +"'}",
+                    dataType: 'json',
+                    headers: { "Content-Type": "application/json" }
+                });
+                post.success(function (data, status) {
+                    //The newly inserted record is inserted into the Customers array.
+                    $scope.Subjects.push(data)
+                });
+                $scope.SubjectID = "";
+                $scope.Title = "";
+                $scope.CourseID = "";
+                $scope.TeacherID = "";
+            };
+
+            //This variable is used to store the original values.
+            $scope.EditItem = {};
+
+            //Editing an existing record.
+            $scope.Edit = function (index) {
+                //Setting EditMode to TRUE makes the TextBoxes visible for the row.
+                $scope.Subjects[index].EditMode = true;
+
+                //The original values are saved in the variable to handle Cancel case.
+                $scope.EditItem.Title = $scope.Subjects[index].Title;
+            };
+
+            //Cancelling an Edit.
+            $scope.Cancel = function (index) {
+                // The original values are restored back into the Customers Array.
+                $scope.Subjects[index].Title = $scope.EditItem.Title;
+
+                //Setting EditMode to FALSE hides the TextBoxes for the row.
+                $scope.Subjects[index].EditMode = false;
+                $scope.EditItem = {};
+            };
+
+            //Updating an existing record to database.
+            $scope.Update = function (index) {
+                var subject = $scope.Subjects[index];
+                var post = $http({
+                    method: "POST",
+                    url: "/Subject/UpdateSubject",
+                    data: '{Subject:' + JSON.stringify(subject) + '}',
+                    dataType: 'json',
+                    headers: { "Content-Type": "application/json" }
+                });
+                post.success(function (data, status) {
+                    //Setting EditMode to FALSE hides the TextBoxes for the row.
+                    subject.EditMode = false;
+                });
+            };
+
+            //Deleting an existing record from database.
+            $scope.Delete = function (subjectId) {
+                if ($window.confirm("Do you want to delete this row?")) {
+                    var post = $http({
+                        method: "POST",
+                        url: "/Subject/DeleteSubject",
+                        data: "{SubjectID: " + subjectId + "}",
+                        dataType: 'json',
+                        headers: { "Content-Type": "application/json" }
+                    });
+                    post.success(function (data, status) {
+                        //Remove the Deleted record from the Customers Array.
+                        $scope.Subjects = $scope.Subjects.filter(function (subject) {
+                            return subject.SubjectID !== subjectId;
+                        });
+                    });
+                }
+            };
+        });
+    </script>
+</body>
+</html>
